@@ -1,0 +1,66 @@
+-- Anti-AFK (Auto ON) + ScreenGui (not movable)
+-- Put this LocalScript in StarterPlayer > StarterPlayerScripts
+
+local Players = game:GetService("Players")
+local VirtualUser = game:GetService("VirtualUser")
+local player = Players.LocalPlayer
+
+-- === Build a simple ScreenGui ===
+local function makeGui()
+    local pg = player:WaitForChild("PlayerGui")
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "AntiAFKGui"
+    gui.ResetOnSpawn = false
+    gui.IgnoreGuiInset = true
+    gui.Parent = pg
+
+    local frame = Instance.new("Frame")
+    frame.Name = "Banner"
+    frame.Parent = gui
+    frame.AnchorPoint = Vector2.new(0.5, 0)
+    frame.Position = UDim2.new(0.5, 0, 0.03, 0)
+    frame.Size = UDim2.new(0, 260, 0, 36)
+    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    frame.BackgroundTransparency = 0.15
+    frame.BorderSizePixel = 0
+
+    local label = Instance.new("TextLabel")
+    label.Parent = frame
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.SourceSansBold
+    label.TextScaled = true
+    label.Text = "✅ Anti-AFK: ON"
+    label.TextColor3 = Color3.fromRGB(0, 255, 0)
+
+    return gui
+end
+
+local gui = makeGui()
+
+-- === Anti-AFK logic ===
+local function poke()
+    -- Try the standard VirtualUser method first
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new(0, 0))
+    -- Fallback tap to be extra safe on some experiences
+    local cam = workspace.CurrentCamera
+    if cam then
+        VirtualUser:Button2Down(Vector2.new(0,0), cam.CFrame)
+        task.wait(0.05)
+        VirtualUser:Button2Up(Vector2.new(0,0), cam.CFrame)
+    end
+end
+
+-- Trigger when Roblox marks you as idle (usually ~2 minutes)
+player.Idled:Connect(function()
+    poke()
+end)
+
+-- Optional keepalive (pre-emptive nudge every 55s to avoid edge cases)
+task.spawn(function()
+    while true do
+        task.wait(55)
+        poke()
+    end
+end)
